@@ -1,5 +1,4 @@
 #pragma once
-#include "Object3D.h"
 
 /**
 * @brief Represents an abstract animation of an object, manipulating one or more of its
@@ -10,7 +9,6 @@ class Animation {
 private:
 	float m_duration;
 	float m_currentTime;
-	Object3D& m_object;
 
 	/**
 	 * @brief Called when the animation is activated by an Animator.
@@ -23,7 +21,7 @@ private:
 	virtual void applyAnimation(float dt) = 0;
 
 public:
-	Animation(Object3D& obj, float duration) : m_object(obj), m_duration(duration),
+	Animation(float duration) : m_duration(duration),
 		m_currentTime(-1) {
 	}
 
@@ -36,11 +34,6 @@ public:
 	 * @brief How much time has elapsed during the execution of this animation.
 	 */
 	float currentTime() const { return m_currentTime; }
-
-	/**
-	* @brief The object the animation is manipulating.
-	*/
-	Object3D& object() const { return m_object; }
 
 	/**
 	* @brief Advances the animation by the given interval, in seconds.

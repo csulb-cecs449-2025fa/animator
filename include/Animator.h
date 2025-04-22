@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
+#include <vector>
 #include "Animation.h"
-#include "RotationAnimation.h"
 
 class Animator {
 private:
