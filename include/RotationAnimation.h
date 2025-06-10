@@ -24,6 +24,6 @@ public:
 	 * angle, linearly interpolated across the given duration.
 	 */
 	RotationAnimation(glm::vec3& objectOrientation, float duration, const glm::vec3& totalRotation) :
-		Animation(duration), m_objectOrientation(objectOrientation), m_perSecond(totalRotation / duration) {}
+		Animation{ duration }, m_objectOrientation{ objectOrientation }, m_perSecond{ totalRotation / duration } {}
 };
 

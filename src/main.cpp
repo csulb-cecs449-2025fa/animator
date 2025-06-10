@@ -1,15 +1,10 @@
-/**
-This application displays a textured mesh whose vertices also contain (u, v) texture coordinates.
-	See "texture_perspective.vert" for a vertex shader that transforms (x,y,z,r,g,b) vertices to clip space.
-	See "texturing.frag" for a fragment shader that samples colors from a 2D texture.
-*/
 #include <glad/glad.h>
 #include <iostream>
 #include <memory>
-#include <filesystem>
 
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Window.hpp>
+#include <SFML/Graphics.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -33,7 +28,7 @@ struct Vertex3D {
 };
 
 ShaderProgram textureShader() {
-	ShaderProgram shader;
+	ShaderProgram shader{};
 	try {
 		shader.load("shaders/texture_perspective.vert", "shaders/texturing.frag");
 	}
@@ -46,7 +41,7 @@ ShaderProgram textureShader() {
 
 Mesh constructMesh(const std::vector<Vertex3D>& vertices, const std::vector<uint32_t>& faces) {
 	Mesh m{};
-	m.faces = faces.size();
+	m.faces = static_cast<uint32_t>(faces.size());
 
 	// Generate a vertex array object on the GPU.
 	glGenVertexArrays(1, &m.vao);
@@ -90,9 +85,11 @@ const size_t VERTICES_PER_FACE = 3;
 // compatible with the rest of our application.
 void fromAssimpMesh(const aiMesh* mesh, std::vector<Vertex3D>& vertices,
 	std::vector<uint32_t>& faces) {
-	for (size_t i = 0; i < mesh->mNumVertices; i++) {
+	for (size_t i{ 0 }; i < mesh->mNumVertices; ++i) {
 		// Each "vertex" from Assimp has to be transformed into a Vertex3D in our application.
-		vertices.push_back({ mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z });
+		vertices.push_back(
+			Vertex3D{ mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z }
+		);
 		// TODO: construct the vertex above with texture coordinates (u, v) in addition to (x, y, z).
 		// To get (u, v) for the current Assimp vertex, access the mTextureCoords field of the
 		// "mesh" local variable. mTextureCoords[0] is the first texture of the mesh (in the future,
@@ -116,13 +113,13 @@ void fromAssimpMesh(const aiMesh* mesh, std::vector<Vertex3D>& vertices,
 // Loads an asset file supported by Assimp, extracts the first mesh in the file, and fills in the 
 // given vertices and faces lists with its data.
 Mesh assimpLoad(const std::string& path, bool flipUvs = false) {
-	int flags = (aiPostProcessSteps)aiProcessPreset_TargetRealtime_MaxQuality;
+	int flags{ (aiPostProcessSteps)aiProcessPreset_TargetRealtime_MaxQuality };
 	if (flipUvs) {
 		flags |= aiProcess_FlipUVs;
 	}
 
-	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, flags);
+	Assimp::Importer importer{};
+	const aiScene* scene{ importer.ReadFile(path, flags) };
 
 	// If the import failed, report it
 	if (nullptr == scene) {
@@ -130,8 +127,8 @@ Mesh assimpLoad(const std::string& path, bool flipUvs = false) {
 		exit(1);
 	}
 	else {
-		std::vector<Vertex3D> vertices;
-		std::vector<uint32_t> faces;
+		std::vector<Vertex3D> vertices{};
+		std::vector<uint32_t> faces{};
 		fromAssimpMesh(scene->mMeshes[0], vertices, faces);
 		return constructMesh(vertices, faces);
 	}
@@ -174,17 +171,17 @@ uint32_t generateTexture(const StbImage& texture) {
 
 // A scene of a textured triangle.
 Mesh triangle() {
-	std::vector<Vertex3D> triangleVertices = {
+	std::vector<Vertex3D> triangleVertices{
 		{ -0.5, -0.5, 0, 0, 1 },
 		{ -0.5, 0.5, 0,  0, 0 },
 		{  0.5, 0.5, 0,  1, 0 }
 	};
-	std::vector<uint32_t> triangleFaces = {
+	std::vector<uint32_t> triangleFaces{
 		2, 1, 0
 	};
-	Mesh m = constructMesh(triangleVertices, triangleFaces);
+	Mesh m{ constructMesh(triangleVertices, triangleFaces) };
 
-	StbImage wall;
+	StbImage wall{};
 	wall.loadFromFile("models/wall.jpg");
 	m.texture = generateTexture(wall);
 	return m;
@@ -193,15 +190,15 @@ Mesh triangle() {
 Mesh bunny() {
 	// Load the bunny, but vertically flip its UV coordinates, because the creator uses 
 	// (0, 0) as the lower LEFT corner of texture space.
-	Mesh obj = assimpLoad("models/bunny_textured.obj", true);
-	StbImage texture;
+	Mesh obj{ assimpLoad("models/bunny_textured.obj", true) };
+	StbImage texture{};
 	texture.loadFromFile("models/bunny_textured.jpg");
 	obj.texture = generateTexture(texture);
 	return obj;
 }
 
 glm::mat4 buildModelMatrix(const glm::vec3& position, const glm::vec3& orientation, const glm::vec3& scale) {
-	auto m = glm::translate(glm::mat4(1), position);
+	auto m{ glm::translate(glm::mat4(1), position) };
 	m = glm::scale(m, scale);
 	m = glm::rotate(m, orientation[2], glm::vec3(0, 0, 1));
 	m = glm::rotate(m, orientation[0], glm::vec3(1, 0, 0));
@@ -210,65 +207,76 @@ glm::mat4 buildModelMatrix(const glm::vec3& position, const glm::vec3& orientati
 }
 
 int main() {
-	std::cout << std::filesystem::current_path() << std::endl;
-	// Initialize the window and OpenGL.
 	sf::ContextSettings settings;
 	settings.depthBits = 24; // Request a 24 bits depth buffer
 	settings.stencilBits = 8;  // Request a 8 bits stencil buffer
-	settings.antialiasingLevel = 2;  // Request 2 levels of antialiasing
-	settings.majorVersion = 3;
+	settings.majorVersion = 3; // You might have to change these on Mac.
 	settings.minorVersion = 3;
-	sf::Window window(sf::VideoMode{ 1200, 800 }, "Modern OpenGL", sf::Style::Resize | sf::Style::Close, settings);
+
+	sf::Window window{
+		sf::VideoMode::getFullscreenModes().at(0), "Modern OpenGL",
+		sf::Style::Resize | sf::Style::Close,
+		sf::State::Windowed, settings
+	};
 
 	gladLoadGL();
+	glEnable(GL_DEPTH_TEST);
 
 	// Inintialize scene objects.
-	Mesh obj = bunny();
+	Mesh obj{ bunny() };
 	//Mesh obj = triangle();
-	glm::vec3 objectPosition = { 0, 0, -3 };
-	glm::vec3 objectOrientation = { 0, 0, 0 };
-	glm::vec3 objectScale = { 3, 3, 3 };
-
-	Animator bunnyAnimator{};
-	bunnyAnimator.addAnimation(std::make_unique<RotationAnimation>(objectOrientation, 10, glm::vec3(0, 6.28, 0)));
-	bunnyAnimator.start();
+	glm::vec3 objectPosition{ 0, 0, -3 };
+	glm::vec3 objectOrientation{ 0, 0, 0 };
+	glm::vec3 objectScale{ 3, 3, 3 };
 
 	// Activate the shader program.
-	ShaderProgram program = textureShader();
+	ShaderProgram program{ textureShader() };
 	program.activate();
 
-	// Ready, set, go!
-	bool running = true;
-	sf::Clock c;
+	// Initialize an animator.
+	Animator bunnyAnimator{};
+	bunnyAnimator.addAnimation(std::make_unique<RotationAnimation>(objectOrientation, 10.0f, glm::vec3(0, 6.28, 0)));
+	bunnyAnimator.start();
 
-	glEnable(GL_DEPTH_TEST);
+	// Ready, set, go!
+	bool running{ true };
+	sf::Clock c;
 
 	auto last = c.getElapsedTime();
 	while (running) {
-		sf::Event ev;
-		while (window.pollEvent(ev)) {
-			if (ev.type == sf::Event::Closed) {
-				running = false;
+		// Check for events.
+		while (const std::optional event{ window.pollEvent() }) {
+			if (event->is<sf::Event::Closed>()) {
+				window.close();
 			}
 		}
-
-		auto now = c.getElapsedTime();
-		auto diff = now - last;
-		std::cout << 1 / diff.asSeconds() << " FPS " << std::endl;
+		auto now{ c.getElapsedTime() };
+		auto diff{ now - last };
 		last = now;
 
-		// Set up the view and projection matrices.
-		glm::mat4 camera = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0));
-		glm::mat4 perspective = glm::perspective(glm::radians(45.0), static_cast<double>(window.getSize().x) / window.getSize().y, 0.1, 100.0);
+#ifdef LOG_FPS
+		// FPS calculation.
+		std::cout << 1 / diff.asSeconds() << " FPS " << std::endl;
+#endif
+
+		// Apply animations.
+		bunnyAnimator.tick(diff.asSeconds());
+
+		// Set up the model, view and projection matrices.
+		glm::mat4 model{
+			buildModelMatrix(objectPosition, objectOrientation, objectScale)
+		}; 
+		glm::mat4 camera{
+			glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)) }
+		;
+		glm::mat4 perspective{
+			glm::perspective(glm::radians(45.0), static_cast<double>(window.getSize().x) / window.getSize().y, 0.1, 100.0)
+		};
+		program.setUniform("model", model);
 		program.setUniform("view", camera);
 		program.setUniform("projection", perspective);
 
-		bunnyAnimator.tick(diff.asSeconds());
-
-		// Adjust object position and rebuild model matrix.
-		glm::mat4 model = buildModelMatrix(objectPosition, objectOrientation, objectScale);
-		program.setUniform("model", model);
-
+		// Draw!
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		drawMesh(obj);
 		window.display();

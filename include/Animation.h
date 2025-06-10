@@ -22,7 +22,7 @@ private:
 
 public:
 	Animation(float duration) : m_duration(duration),
-		m_currentTime(-1) {
+		m_currentTime{ -1 } {
 	}
 
 	/**

@@ -18,7 +18,7 @@ void Animator::nextAnimation() {
 void Animator::tick(float dt) {
 	// Advance the active animation by the given interval.
 	if (m_currentIndex >= 0) {
-		float lastTime = m_currentTime;
+		float lastTime{ m_currentTime };
 		m_currentTime += dt;
 
 		// If our current time surpasses the next transition time, we need to tick
@@ -26,9 +26,9 @@ void Animator::tick(float dt) {
 		// (by the amount we exceeded the transition time).
 		if (m_currentTime >= m_nextTransition) {
 			m_currentAnimation->tick(m_nextTransition - lastTime);
-			float overTime = m_currentTime - m_nextTransition;
+			float overTime{ m_currentTime - m_nextTransition };
 			nextAnimation();
-			if (m_currentAnimation != nullptr) {
+			if (nullptr != m_currentAnimation) {
 				m_currentAnimation->tick(overTime);
 			}
 		}
