@@ -78,7 +78,6 @@ Mesh constructMesh(const std::vector<Vertex3D>& vertices, const std::vector<uint
 	return m;
 }
 
-const size_t FLOATS_PER_VERTEX = 3;
 const size_t VERTICES_PER_FACE = 3;
 
 // Reads the vertices and faces of an Assimp mesh, and uses them to initialize mesh structures
@@ -102,7 +101,7 @@ void fromAssimpMesh(const aiMesh* mesh, std::vector<Vertex3D>& vertices,
 	}
 
 	faces.reserve(mesh->mNumFaces * VERTICES_PER_FACE);
-	for (size_t i = 0; i < mesh->mNumFaces; i++) {
+	for (size_t i{ 0 }; i < mesh->mNumFaces; ++i) {
 		// We assume the faces are triangular, so we push three face indexes at a time into our faces list.
 		faces.push_back(mesh->mFaces[i].mIndices[0]);
 		faces.push_back(mesh->mFaces[i].mIndices[1]);
@@ -113,7 +112,7 @@ void fromAssimpMesh(const aiMesh* mesh, std::vector<Vertex3D>& vertices,
 // Loads an asset file supported by Assimp, extracts the first mesh in the file, and fills in the 
 // given vertices and faces lists with its data.
 Mesh assimpLoad(const std::string& path, bool flipUvs = false) {
-	int flags{ (aiPostProcessSteps)aiProcessPreset_TargetRealtime_MaxQuality };
+	int flags{ static_cast<aiPostProcessSteps>(aiProcessPreset_TargetRealtime_MaxQuality) };
 	if (flipUvs) {
 		flags |= aiProcess_FlipUVs;
 	}
@@ -200,9 +199,9 @@ Mesh bunny() {
 glm::mat4 buildModelMatrix(const glm::vec3& position, const glm::vec3& orientation, const glm::vec3& scale) {
 	auto m{ glm::translate(glm::mat4(1), position) };
 	m = glm::scale(m, scale);
-	m = glm::rotate(m, orientation[2], glm::vec3(0, 0, 1));
-	m = glm::rotate(m, orientation[0], glm::vec3(1, 0, 0));
-	m = glm::rotate(m, orientation[1], glm::vec3(0, 1, 0));
+	m = glm::rotate(m, orientation[2], glm::vec3{ 0, 0, 1 });
+	m = glm::rotate(m, orientation[0], glm::vec3{ 1, 0, 0 });
+	m = glm::rotate(m, orientation[1], glm::vec3{ 0, 1, 0 });
 	return m;
 }
 
@@ -235,7 +234,7 @@ int main() {
 
 	// Initialize an animator.
 	Animator bunnyAnimator{};
-	bunnyAnimator.addAnimation(std::make_unique<RotationAnimation>(objectOrientation, 10.0f, glm::vec3(0, 6.28, 0)));
+	bunnyAnimator.addAnimation(std::make_unique<RotationAnimation>(objectOrientation, 10.0f, glm::vec3{ 0, 6.28, 0 }));
 	bunnyAnimator.start();
 
 	// Ready, set, go!
@@ -265,10 +264,10 @@ int main() {
 		// Set up the model, view and projection matrices.
 		glm::mat4 model{
 			buildModelMatrix(objectPosition, objectOrientation, objectScale)
-		}; 
+		};
 		glm::mat4 camera{
-			glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)) }
-		;
+			glm::lookAt(glm::vec3{0, 0, 0}, glm::vec3{0, 0, -1}, glm::vec3{0, 1, 0}) 
+		};
 		glm::mat4 perspective{
 			glm::perspective(glm::radians(45.0), static_cast<double>(window.getSize().x) / window.getSize().y, 0.1, 100.0)
 		};
