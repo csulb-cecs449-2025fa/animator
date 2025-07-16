@@ -241,8 +241,8 @@ int main() {
 	bool running{ true };
 	sf::Clock c;
 
-	auto last = c.getElapsedTime();
-	while (running) {
+	auto last{ c.getElapsedTime() };
+	while (window.isOpen()) {
 		// Check for events.
 		while (const std::optional event{ window.pollEvent() }) {
 			if (event->is<sf::Event::Closed>()) {
